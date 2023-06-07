@@ -58,70 +58,63 @@ SELECT * FROM dim_cliente;
 ----Criando a tabela : dim_canal----
 
 CREATE TABLE dim_canal AS
-SELECT canal AS nomecanal
+SELECT DISTINCT canal AS nomecanal
       , CASE
            WHEN canal = 'Loja Própria' THEN 1
            WHEN canal = 'Loja Virtual' THEN 2
            ELSE 3
        END AS codigocanal
-FROM (SELECT DISTINCT canal FROM tbven) AS subquery;
+FROM tbven;
 	 
 SELECT * FROM dim_canal;
 
 
 ----Criando a tabela : dim_status---
 
-CREATE TABLE dim_status AS
-SELECT DISTINCT stven AS statusvenda
-      , ROW_NUMBER() OVER (ORDER BY stven) AS codigostatus
-	  FROM tbven;
-	  
+CREATE TABLE dim_status (
+    statusvenda INT,
+    situacaostatusvenda VARCHAR(10)
+);
+
+INSERT INTO dim_status
+SELECT DISTINCT stven::INT AS statusvenda,
+    CASE
+        WHEN stven = '1' THEN 'concluída'
+        WHEN stven = '2' THEN 'em aberto'
+        WHEN stven = '3' THEN 'cancelada'
+        ELSE '4'
+    END AS situacaostatusvenda
+FROM tbven;
+
 SELECT * FROM dim_status;	  
 
 ---Criando a tabela : dim_data----
 
-CREATE TABLE dim_data (
-    Data DATE PRIMARY KEY,
-    Ano INT,
-    Mes INT,
-    Dia INT,
-    DiaDaSemana INT,
-    Trimestre INT,
-    Semestre INT,
-    Feriado VARCHAR(100),
-    DiaUtil VARCHAR(3),
-    DiaDoAno INT
-);
-
-
-
--- Preencher a tabela de dimensão com as datas da tabela de vendas
-
-INSERT INTO dim_data (Data)
-SELECT DISTINCT dtven
+CREATE TABLE dim_data AS
+SELECT DISTINCT dtven AS Data,
+    EXTRACT(YEAR FROM dtven) AS Ano,
+    TO_CHAR(dtven, 'DDMMYYYY') AS DataCurta,
+    TO_CHAR(dtven, 'Day') AS DiaDaSemana,
+    EXTRACT(DAY FROM dtven) AS DiaMes,
+    TO_CHAR(dtven, 'Month') AS MesNome,
+    EXTRACT(MONTH FROM dtven) AS MesNumero,
+    CASE
+        WHEN EXTRACT(MONTH FROM dtven) <= 3 THEN 1
+        WHEN EXTRACT(MONTH FROM dtven) <= 6 THEN 2
+        WHEN EXTRACT(MONTH FROM dtven) <= 9 THEN 3
+        ELSE 4
+    END AS Trimestre,
+    CASE
+        WHEN EXTRACT(MONTH FROM dtven) <= 6 THEN 1
+        ELSE 2
+    END AS Semestre
 FROM tbven;
-
--- Preencher a tabela de dimensão com as datas da tabela de dependentes
-
-INSERT INTO dim_data (Data)
-SELECT DISTINCT dtnasc
-FROM tbdep;
-
----------- Selecionando toda a tabela dim_data-----------------------
 
 SELECT * FROM dim_data;
 
-------------Selecionando a data da tbven join dim_data --------------------
 
-SELECT v.dtven AS data_vendas
-FROM tbven AS v
-JOIN dim_data AS dd ON v.dtven = dd.Data;
-
-------------Selecionando a data da tbdep join dim_data---------------------
-
-SELECT d.dtnasc AS data_nascimento
-FROM tbdep AS d
-JOIN dim_data AS dd ON d.dtnasc = dd.Data;
+	
+	
 
 	
 	
