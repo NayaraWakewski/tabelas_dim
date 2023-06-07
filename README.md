@@ -84,23 +84,6 @@ SELECT * FROM dim_data;
 
 ``` 
 
-### 3.8 [dim_data] (SELECIONANDO DATA DA tbven) - Podemos criar uma consulta com JOIN para filtrar as datven da tbven.
-   
-```
-SELECT v.dtven AS data_vendas
-FROM tbven AS v
-JOIN dim_data AS dd ON v.dtven = dd.Data;
-
-``` 
-
-### 3.9 [dim_data] (SELECIONANDO DATA DA tbdep) - Podemos criar uma consulta com JOIN para filtrar as dtnasc da tbdep.
-
-```
-SELECT d.dtnasc AS data_nascimento
-FROM tbdep AS d
-JOIN dim_data AS dd ON d.dtnasc = dd.Data;
-
-``` 
     
 <br>
 
