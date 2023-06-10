@@ -19,8 +19,9 @@ A tabela fato (fato_vendas) é associada a uma ou mais tabelas dimensionais, que
 <br>
 
 <br>
-  
-| Tabelas Dimensionais | Descrição |
+
+ 
+|Tabelas Dimensionais e Fatos.| Descrição |
 | --- | --- |
 | `dim_produto` | A tabela dim_produto é criada a partir da tabela tbpro. Ela armazena informações sobre produtos, incluindo o código do produto, nome, tipo, unidade, saldo e status. |
 | `dim_vendedor` | A tabela dim_vendedor é criada a partir da tabela tbvdd. Ela armazena informações sobre vendedores, incluindo o código do vendedor, nome, sexo, percentual de comissão e matrícula funcional. Nessa tabela utilizamos o CASE para mudar a informação de sexo de numeral para texto (F ou M)|
@@ -28,14 +29,11 @@ A tabela fato (fato_vendas) é associada a uma ou mais tabelas dimensionais, que
 | `dim_cliente` | A tabela dim_cliente é criada a partir da tabela tbven. Ela armazena informações sobre clientes, incluindo o código do cliente, nome, idade, classificação, sexo, cidade, estado e país. Utilizamos o DISTINCT ao SELECT para garantir que apenas linhas distintas sejam selecionadas na criação da tabela dimensão dim_cliente. Isso garante que não haja duplicatas na dimensão.| 
 | `dim_canal` | A tabela dim_canal é criada a partir da tabela tbven. Ela armazena informações sobre canais de venda, incluindo o nome do canal e um código atribuído com base no tipo de canal. Utilizamos o DISTINCT ao SELECT para garantir que apenas linhas distintas sejam selecionadas na criação da tabela dimensão dim_canal. Isso garante que não haja duplicatas na dimensão. Adicionamos a cláusula CASE no SELECT para mapear os valores da coluna canal para códigos correspondentes na coluna codigocanal, para que cada canal tem um código específico correspondente, para evitar que na inclusão de uma coluna canal, seja criado códigos seriados, mesmo com o nome do canal já existente.|
 | `dim_status` | A tabela dim_status é criada a partir da tabela tbven. Ela armazena informações sobre os status das vendas, incluindo o nome do status e um código atribuído sequencialmente. Utilizamos o DISTINCT ao SELECT para garantir que apenas linhas distintas sejam selecionadas na criação da tabela dimensão dim_canal. Isso garante que não haja duplicatas na dimensão.| 
-| `dim_data` |A tabela dim_data é criada para armazenar informações relacionadas a datas. Ela inclui informações como a data em si, ano, mês, dia, dia da semana, trimestre, semestre, feriado, dia útil e dia do ano.|  
+| `dim_data` |A tabela dim_data é criada para armazenar informações relacionadas a datas. Ela inclui informações como a data em si, ano, mês, dia, dia da semana, trimestre, semestre, feriado, dia útil e dia do ano.|
+| `fato_vendas` | A tabela fato_vendas é criada a partir da junção das tabelas tbven_item e tbven, que são as tabelas relacionais que armazenam informações sobre as vendas. A tabela tbven_item contém os itens individuais de cada venda, incluindo o código do item de venda, o código do produto, a quantidade vendida, o valor unitário e o valor total da venda. Por sua vez, a tabela tbven armazena informações gerais sobre cada venda, como a data da venda, o código do cliente, o código do vendedor, o canal de venda e o status da venda.Ao criar a tabela fato_vendas, é feita uma junção (join) dessas duas tabelas com base na chave estrangeira cdven (código de venda), que está presente em ambas as tabelas. A junção combina os dados das tabelas tbven_item e tbven, criando uma tabela consolidada que contém todas as informações relevantes sobre as vendas, incluindo os detalhes dos itens vendidos, a data da venda, o cliente, o vendedor, o canal de venda e o status da venda. Essa tabela fato_vendas serve como uma representação denormalizada dos dados de vendas, onde os detalhes são consolidados em uma única tabela para facilitar a análise e consulta dos dados. Ela se torna a tabela central para análise de vendas e permite realizar consultas eficientes e agregações de dados para obter insights sobre o desempenho das vendas.| 
 
-| Tabelas Fatos | Descrição |
-| --- | --- |
-| `fato_vendas` | A tabela fato_vendas é criada a partir da junção das tabelas tbven_item e tbven, que são as tabelas relacionais que armazenam informações sobre as vendas.
-A tabela tbven_item contém os itens individuais de cada venda, incluindo o código do item de venda, o código do produto, a quantidade vendida, o valor unitário e o valor total da venda. Por sua vez, a tabela tbven armazena informações gerais sobre cada venda, como a data da venda, o código do cliente, o código do vendedor, o canal de venda e o status da venda.
-Ao criar a tabela fato_vendas, é feita uma junção (join) dessas duas tabelas com base na chave estrangeira cdven (código de venda), que está presente em ambas as tabelas. A junção combina os dados das tabelas tbven_item e tbven, criando uma tabela consolidada que contém todas as informações relevantes sobre as vendas, incluindo os detalhes dos itens vendidos, a data da venda, o cliente, o vendedor, o canal de venda e o status da venda.
-Essa tabela fato_vendas serve como uma representação denormalizada dos dados de vendas, onde os detalhes são consolidados em uma única tabela para facilitar a análise e consulta dos dados. Ela se torna a tabela central para análise de vendas e permite realizar consultas eficientes e agregações de dados para obter insights sobre o desempenho das vendas. |
+
+
 
 <br>
 
@@ -107,8 +105,9 @@ SELECT * FROM dim_data;
     
 ## 4. Dicas.
 
-*Para retornar os nomes dos meses e semanas em Português, se faz necessário criar uma função, conforme exemplo abaixo:
+### [Para retornar os nomes dos meses e semanas em Português, se faz necessário criar uma função, conforme exemplo abaixo:]
 
+```
 CREATE OR REPLACE FUNCTION data_nome_pt(data DATE)
   RETURNS TABLE (nome_mes TEXT, nome_dia_semana TEXT)
 AS $$
@@ -124,8 +123,11 @@ $$ LANGUAGE plpgsql;
 
 Adicionamos o ::integer ao extrair o mês e o dia da semana usando EXTRACT. Isso garante que os valores sejam tratados corretamente como inteiros para acessar os índices dos arrays meses e dias_semana.
 
-Depois de executar a função, podemos criar a tabela dim_data, conforme abaixo:
+```
 
+### [Depois de executar a função, podemos criar a tabela dim_data, conforme abaixo:]
+
+```
 CREATE TABLE dw.dim_data AS
 SELECT DISTINCT
     dtven AS Data,
@@ -150,6 +152,8 @@ FROM public.tbven;
 SELECT * FROM dw.dim_data;
 
 Dentro da criação da tabela, usamos (data_nome_pt(dtven)).nome_mes e (data_nome_pt(dtven)).nome_dia_semana para obter o nome do mês e o nome do dia da semana retornados pela função.
+
+```
     
 <br>
     
@@ -159,6 +163,28 @@ Dentro da criação da tabela, usamos (data_nome_pt(dtven)).nome_mes e (data_nom
   ### Nayara Valevskii
 - [Linkedin](https://www.linkedin.com/in/nayaraba)
 - [Github](https://github.com/NayaraWakewski)
+
+    
+    
+    
+    
+
+
+    
+    
+    
+
+    
+    
+    
+    
+
+
+    
+    
+    
+    
+
 
     
     
